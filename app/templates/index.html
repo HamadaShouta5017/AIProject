@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>チャットBOT</title>
+    <style>
+        body { font-family: sans-serif; margin: 32px; }
+        .history { background-color: #f7f7f7; padding: 10px; height: 300px; overflow: auto; margin-bottom: 20px;}
+        .me { color: #1e88e5; margin:0; }
+        .ai { color: #43a047; margin:0; }
+    </style>
+</head>
+<body>
+    <h2>OpenAI チャットBOT</h2>
+    <div class="history" id="history"></div>
+    <input id="msg" type="text" style="width: 70%;">
+    <button onclick="send()">送信</button>
+
+<script>
+    // 会話履歴。最初にsystemプロンプトを入れておきます
+    let messages = [
+        {"role":"system", "content":""}
+    ];
+    function append(role, text) {
+        const div = document.getElementById("history");
+        let p = document.createElement("p");
+        p.className = role;
+        p.innerText = (role==="user"? "あなた: ":"AI: ") + text;
+        div.appendChild(p);
+        div.scrollTop = div.scrollHeight;
+    }
+    async function send() {
+        let input = document.getElementById("msg");
+        let message = input.value.trim();
+        if (!message) return;
+        messages.push({"role":"user","content":message});
+        append("user", message);
+        input.value = "";
+        let res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({messages})
+        });
+        let data = await res.json();
+        messages.push({"role":"assistant","content":data.reply});
+        append("assistant", data.reply);
+    }
+    document.getElementById("msg").addEventListener("keydown",function(e){
+        if(e.key==="Enter"){send();}
+    });
+</script>
+</body>
+</html>
